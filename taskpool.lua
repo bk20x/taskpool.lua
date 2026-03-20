@@ -81,23 +81,6 @@ function TaskPool:spawn(func, ...)
 end
 
 
---- Same as spawn only it does not immediately invoke `func` and waits for the next time run() is called or the task is awaited
-function TaskPool:doLater(func, ...)
-    local args = {...}
-    local coro = coroutine.create(func)
-    local id   = next_id()
-    local task = {
-        id      = id,
-        job     = coro,
-        status  = coroutine.status(coro),
-        results = nil
-    }
-    self.tasks[id]   = task
-    self.alive_tasks = self.alive_tasks + 1
-    return id
-end
-
-
 --- Iterates over all living tasks once invoking them
 function TaskPool:run()
     for id, task in pairs(self.tasks) do
