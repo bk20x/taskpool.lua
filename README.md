@@ -5,6 +5,13 @@ local yield = coroutine.yield
 local TaskPool = require 'taskpool'
 local pool = TaskPool.New()
 
+pool:spawn(function ()
+    for _ = 1, 10 do 
+	    print('Hello from the side task!')
+		yield()
+    end
+end)
+
 local function lazy_map(xs, f)
     local result = {}
     for idx, x in pairs(xs) do
@@ -13,13 +20,6 @@ local function lazy_map(xs, f)
     end
     return result
 end
-
-pool:spawn(function ()
-    for _ = 1, 10 do 
-	    print('Hello from the side task!')
-		yield()
-    end
-end)
 
 local handle = pool:spawn(lazy_map, {2,4,6,8,10}, function (x) return x * x end)
 
