@@ -1,5 +1,5 @@
 # Lua Taskpools
-```
+```lua
 local yield = coroutine.yield
 
 local TaskPool = require 'taskpool'
