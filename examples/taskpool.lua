@@ -3,11 +3,10 @@ TaskPool.__index = TaskPool
 
 local next_id = (function ()
     local x = 0
-    local function inc()
+    return function ()
         x = x + 1
         return x
     end
-    return inc
 end)()
 
 local function resume(task)
@@ -55,10 +54,10 @@ function TaskPool:despawn(handle)
 end
 
 
---- Returns the last yielded value of the task or its final return value
+--- Returns the last yielded value of the task or its final return value being `val` and its status being `stat` in `val, stat`
 function TaskPool:query(handle)
     local task = self.tasks[handle]
-    if not task then return nil else return task.results end
+    if not task then return nil else return task.results, task.status end
 end
 
 
@@ -101,8 +100,8 @@ function TaskPool:doLater(func, ...)
         results = nil,
         args    = args --- we need to store them to pass to resume when they are eventually called for the first time. after that args is set to nil
     }
-    self.tasks[id]     = task
-    self.alive_tasks   = self.alive_tasks + 1
+    self.tasks[id]    = task
+    self.alive_tasks  = self.alive_tasks + 1
     return id
 end
 
@@ -123,7 +122,6 @@ function TaskPool:run()
     end
 end
 
-
 --- Blocks until the task is completed and returns its result
 function TaskPool:await(handle)
     local task = self.tasks[handle]
@@ -136,7 +134,6 @@ function TaskPool:await(handle)
         end
     end
 end
-
 
 --- Despawns all dead tasks and returns their results as a table of ids to their corresponding results
 function TaskPool:reap()
@@ -172,12 +169,5 @@ function TaskPool:awaitAll()
     while self.alive_tasks > 0 do
         self:run()
     end
-end
-
---- The same as `pool.tasks[handle]`
-function TaskPool:status(handle)
-    local task = self.tasks[handle]
-    if not task then return nil end
-    return task.status
 end
 return TaskPool

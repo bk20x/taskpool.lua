@@ -11,15 +11,14 @@ pool:spawn(function ()
 end)
 
 local task_id = pool:spawn(function ()
-    local x = 0
-    for i = 1, 10 do
-        x = x + 1
+    local x = 1
+    for _ = 1, 10 do
+        x = x * 2
         print('Hello from task 2! x = ' .. tostring(x))
         yield()
     end
     return x
 end)
-
 
 
 repeat
@@ -28,4 +27,4 @@ until pool.alive_tasks == 0
 
 
 local result = pool:query(task_id)
-print('result of task = ' .. tostring(result))
+print('result of task 2 = ' .. tostring(result))
