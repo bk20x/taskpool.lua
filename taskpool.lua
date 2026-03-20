@@ -10,12 +10,21 @@ local next_id = (function ()
     return inc
 end)()
 
+local function resume(task)
+    if task.args then
+        local coro_args = task.args
+        task.args = nil
+        return coroutine.resume(task.job, table.unpack(coro_args))
+    else
+        return coroutine.resume(task.job)
+    end
+end
 
 local function try_task(task)
     if task.status == "dead" then
         return true, task.results
     end
-    local success, results = coroutine.resume(task.job)
+    local success, results = resume(task)
     task.status  = coroutine.status(task.job)
     task.results = results
     if not success then
@@ -80,6 +89,22 @@ function TaskPool:spawn(func, ...)
     return id
 end
 
+--- Same as spawn only it does not immediately invoke `func` and waits for the next time run() is called or the task is awaited
+function TaskPool:doLater(func, ...)
+    local args = {...}
+    local coro = coroutine.create(func)
+    local id   = next_id()
+    local task = {
+        id      = id,
+        job     = coro,
+        status  = coroutine.status(coro),
+        results = nil,
+        args    = args --- we need to store them to pass to resume when they are eventually called for the first time. after that args is set to nil
+    }
+    self.tasks[id]     = task
+    self.alive_tasks   = self.alive_tasks + 1
+    return id
+end
 
 --- Iterates over all living tasks once invoking them
 function TaskPool:run()
